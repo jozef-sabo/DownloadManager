@@ -1,0 +1,87 @@
+# Created by https://www.toptal.com/developers/gitignore/api/python,pycharm+all,linux,flask
+# Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm+all,linux,flask
+
+### Flask ###
+instance/*
+!instance/.gitignore
+.webassets-cache
+.env
+
+### Flask.Python Stack ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Flask stuff:
+instance/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+### Linux ###
+*~
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# Generated files
+.idea/**/contentModel.xml
+
+# IntelliJ
+out/
+
+.idea/*
+
+!.idea/codeStyles
+!.idea/runConfigurations
