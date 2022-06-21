@@ -100,14 +100,14 @@ function add_list_item(file_data) {
                             <div class="pt-2 d-flex align-content-between justify-content-between flex-column flex-md-row">
                                 <div class="d-flex flex-row justify-content-between w-100">
                                     <div class="py-2">
-                                        <span class="text-muted">` + total_arr[0] +`<span class="size-marker">` + total_arr[1] +`</span> </span>
-                                        <span>` + filename +`</span>
+                                        <span class="text-muted">${total_arr[0]}<span class="size-marker">${total_arr[1]}</span> </span>
+                                        <span>${filename}</span>
                                     </div>
-                                    <button type="button" class="btn btn-outline-danger mx-1">X</button>
+                                    <button type="button" class="btn btn-outline-danger mx-1">${text_stop_button}</button>
                                 </div>
-                                <div class="col-md-3 d-flex flex-column justify-content-center pt-md-0 pt-2">
+                                <div class="col-md-4 ${finished_progress} d-flex flex-column justify-content-center pt-md-0 pt-2">
                                     <div class="progress">
-                                        <div class="progress-bar" role="progressbar" style="width: ` + percent +`%" aria-valuenow="` + percent +`" aria-valuemin="0" aria-valuemax="100">` + percent +`% - ` + speed_arr[0] + speed_arr[1] +`/s</div>
+                                        <div class="progress-bar" role="progressbar" style="width: ${percent}%" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">${text_percent_size}</div>
                                     </div>
                                 </div>
                             </div>
