@@ -1,7 +1,7 @@
 let input_url = document.getElementById("input_url");
 let list_downloads = document.getElementById("list_downloads");
 let data_version = 0;
-let size_multipliers = {
+const size_multipliers = {
     "B": 1,
     "kB": 1024,
     "MB": 1_048_576,
@@ -91,7 +91,7 @@ function add_list_item(file_data) {
     let speed_arr = convert_size_to_array(file_data["speed"])
     let downloaded_arr = convert_size_to_array(file_data["downloaded"])
 
-    array_items.push({"title": filename, "total": total_arr})
+    array_items.push({"title": filename, "total": total_arr, "finished": finished})
 
     let percent = 100
     let finished_progress = "bg-success"
@@ -130,12 +130,15 @@ function edit_list_item(index, data) {
     let progress_bar = list_downloads.children[index].firstElementChild.children[1].firstElementChild.firstElementChild
     let stop_button = list_downloads.children[index].firstElementChild.firstElementChild.lastElementChild
     let progress_bar_text_arr = progress_bar.innerHTML.split("-")
-    let finished = false
+    let finished = array_items[index]["finished"]
+
+    if (finished) return
 
     if (data["finished"] !== undefined) {
         finished = data["finished"]
         if (finished) {
             stop_button.innerHTML = "X"
+            array_items[index]["finished"] = true
         }
     }
 

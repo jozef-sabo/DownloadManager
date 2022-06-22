@@ -29,6 +29,7 @@ def struct_data_for_websocket(data: dict) -> dict:
     return {
         "speed": data["speed_current"],
         "downloaded": data["data_received"],
+        "finished": True if data["data_percent"] == "100" else False
     }
 
 
