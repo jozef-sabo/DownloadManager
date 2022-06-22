@@ -3,13 +3,13 @@ import json
 from flask import Flask, render_template, request, Response
 from flask_socketio import SocketIO, send, emit
 import eventlet
-# from db import db
+from db import db
 
 eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "SecretKeyForFlaskApplicationMadeByJefinko"
-app.config['DATABASE'] = "db/flask_db"
+app.config['DATABASE'] = "db/db"
 socketio = SocketIO(app)
 
 
@@ -88,4 +88,6 @@ def download():
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.init_app(app)
     socketio.run(app, debug=True)
