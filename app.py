@@ -21,11 +21,13 @@ def bg_emit():
             "files": [
                 {
                     "speed": "350k",
-                    "downloaded": "105M"
+                    "downloaded": "13605M",
+                    "finished": True
                 },
                 {
                     "speed": "15M",
-                    "downloaded": "1263M"
+                    "downloaded": "1763M",
+                    "finished": False
                 }
             ]
         }
@@ -61,13 +63,15 @@ def initialize():
                     "title": "Filename.mp4",
                     "total": "1955M",
                     "downloaded": "350M",
-                    "speed": "105M"
+                    "speed": "105M",
+                    "finished": False
                 },
                 {
                     "title": "Filename2.mp4",
                     "total": "2555M",
                     "downloaded": "2336M",
-                    "speed": "105M"
+                    "speed": "105M",
+                    "finished": False
                 }
             ]
         }

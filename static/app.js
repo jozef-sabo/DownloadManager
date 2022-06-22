@@ -86,15 +86,26 @@ function convert_size_to_array(size) {
 
 function add_list_item(file_data) {
     let filename = file_data["title"]
+    let finished = file_data["finished"]
     let total_arr = convert_size_to_array(file_data["total"])
     let speed_arr = convert_size_to_array(file_data["speed"])
     let downloaded_arr = convert_size_to_array(file_data["downloaded"])
 
     array_items.push({"title": filename, "total": total_arr})
 
-    let percent = Math.floor(100 * downloaded_arr[2] / total_arr[2])
+    let percent = 100
+    let finished_progress = "bg-success"
+    let text_percent_size = "100%"
+    let text_stop_button = "X"
 
-
+    if (!finished) {
+        percent = Math.floor(100 * downloaded_arr[2] / total_arr[2])
+        percent = (percent > 99) ? 99 : percent
+        percent = (percent < 0) ? 0 : percent
+        finished_progress = ""
+        text_percent_size = `${percent}% - ${speed_arr[0]}${speed_arr[1]}/s`
+        text_stop_button = "■"
+    }
 
     let list_item = `<li class="list-group-item">
                             <div class="pt-2 d-flex align-content-between justify-content-between flex-column flex-md-row">
@@ -117,7 +128,16 @@ function add_list_item(file_data) {
 
 function edit_list_item(index, data) {
     let progress_bar = list_downloads.children[index].firstElementChild.children[1].firstElementChild.firstElementChild
+    let stop_button = list_downloads.children[index].firstElementChild.firstElementChild.lastElementChild
     let progress_bar_text_arr = progress_bar.innerHTML.split("-")
+    let finished = false
+
+    if (data["finished"] !== undefined) {
+        finished = data["finished"]
+        if (finished) {
+            stop_button.innerHTML = "X"
+        }
+    }
 
     if (data["speed"] !== undefined) {
         let speed_arr = convert_size_to_array(data["speed"])
@@ -128,9 +148,22 @@ function edit_list_item(index, data) {
 
     if (data["downloaded"] !== undefined) {
         let downloaded_arr = convert_size_to_array(data["downloaded"])
-        let percent = Math.floor(100 * downloaded_arr[2] / array_items[index]["total"][2])
-        progress_bar_text_arr[0] = `${percent}% `
-        progress_bar.innerHTML = progress_bar_text_arr.join("-")
+        let percent = 100
+        let text_percent_size = "100%"
+
+        progress_bar.classList.add("bg-success")
+
+        if (!finished) {
+            progress_bar.classList.remove("bg-success")
+            percent = Math.floor(100 * downloaded_arr[2] / array_items[index]["total"][2])
+            percent = (percent > 99) ? 99 : percent
+            percent = (percent < 0) ? 0 : percent
+
+            progress_bar_text_arr[0] = `${percent}% `
+            text_percent_size = progress_bar_text_arr.join("-")
+        }
+
+        progress_bar.innerHTML = text_percent_size
         progress_bar.style.width = percent + "%"
         progress_bar.setAttribute("aria-valuenow", String(percent))
     }
