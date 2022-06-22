@@ -17,7 +17,7 @@ function download() {
     let data = JSON.stringify(
         {
             "url": url,
-            "ftp_client": 0
+            "ftp_client": -1
         }
     )
     send_request("download", "POST", data, null, null)
