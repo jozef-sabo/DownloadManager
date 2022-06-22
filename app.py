@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, Response
 from flask_socketio import SocketIO, send, emit
 import eventlet
 from db import db
+from modules import communicator
 
 eventlet.monkey_patch()
 
@@ -82,7 +83,7 @@ def initialize():
 
 @app.route('/download', methods=["POST"])
 def download():
-    request.json["aaa"] = "abcab"
+    communicator.download(request.json)
 
     return request.json
 

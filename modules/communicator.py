@@ -1,4 +1,13 @@
-PATH_STRUCTURE = "./%s.out"
+from db import db
+import urllib.parse
+import os
+import random
+import subprocess
+
+PATH_STRUCTURE = "./modules/%s.out"
+OUTPUT_PATH = "/home/user/ftp"
+NOHUP_OUTPUT_PATH = "/home/user/ftp/nohup"
+UUID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 
 def read_data(download_uuid: str) -> dict:
@@ -31,6 +40,60 @@ def struct_data_for_websocket(data: dict) -> dict:
         "downloaded": data["data_received"],
         "finished": True if data["data_percent"] == "100" else False
     }
+
+
+def download(data):
+    url_text = data["url"]
+    # TODO: check if ../ working in curl
+    url = urllib.parse.urlparse(url_text)
+    if not url.scheme or url.scheme == "file":
+        url = url._replace(scheme="http")
+
+    filename = os.path.basename(url.path)
+    url_text = url.geturl()
+
+    add_entry_to_database(filename, url_text)
+
+
+def create_uuid(size: int = 10) -> str:
+    return "".join(random.sample(UUID_CHARS, size))
+
+
+def execute_curl(url, name, uuid):
+    path_to_output_file = os.path.join(NOHUP_OUTPUT_PATH, uuid)
+    process = subprocess.Popen(
+        ["curl", "-Lo", name, url],
+        stdin=subprocess.DEVNULL,
+        stdout=open(f"{path_to_output_file}.out", 'w'),
+        stderr=subprocess.STDOUT,
+        # shell=True
+    )
+
+    return process.pid
+
+
+def add_entry_to_database(name, url):
+    connection = db.get_db()
+    uuid = ""
+    for _ in range(10):
+        uuid_temp = create_uuid()
+
+        entries = connection.execute("SELECT id FROM downloads WHERE uuid=?", (uuid_temp, )).fetchall()
+        if not entries:
+            uuid = uuid_temp
+            break
+
+    if not uuid:
+        return
+
+    pid = execute_curl(url, name, uuid)
+    print(pid)
+
+
+"""def test_db(data):
+    connection = db.get_db()
+    connection.execute("INSERT INTO downloads(hash, name, total, status) VALUES ('habbah', 'Name of', '125M', 2)")
+    connection.commit()"""
 
 
 print(read_data("nohup"))
