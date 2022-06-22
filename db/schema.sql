@@ -1,0 +1,24 @@
+DROP TABLE IF EXISTS statuses;
+DROP TABLE IF EXISTS downloads;
+
+CREATE TABLE statuses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT NOT NULL
+);
+
+INSERT INTO statuses (description) VALUES ('PENDING');
+INSERT INTO statuses (description) VALUES ('IN_PROGRESS');
+INSERT INTO statuses (description) VALUES ('FINISHED');
+INSERT INTO statuses (description) VALUES ('FINISHED_AVAILABLE_TO_UNZIP');
+
+CREATE TABLE downloads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  uuid TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  total TEXT NOT NULL,
+  status INT NOT NULL,
+  url TEXT NOT NULL,
+  pid INT NOT NULL,
+  FOREIGN KEY (status) REFERENCES statuses (id)
+);
