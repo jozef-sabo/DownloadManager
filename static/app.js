@@ -196,6 +196,7 @@ function edit_list_item(index, data) {
             progress_bar.classList.remove("bg-success")
             progress_bar.classList.add("progress-bar-animated")
             progress_bar.classList.add("progress-bar-striped")
+            text_percent_size = progress_bar_text_arr[1]
             if (array_items[index]["total"][2] !== 0) {
                 percent = Math.floor(100 * downloaded_arr[2] / array_items[index]["total"][2])
                 percent = (percent > 99) ? 99 : percent
