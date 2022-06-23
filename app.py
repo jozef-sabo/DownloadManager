@@ -13,6 +13,10 @@ app.config['SECRET_KEY'] = "SecretKeyForFlaskApplicationMadeByJefinko"
 app.config['DATABASE'] = "db/db"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+data_version = -1
+files_structure = []
+uuids_pids = []
+
 
 def bg_emit():
     socketio.emit(
@@ -56,36 +60,35 @@ def index():
 
 @app.route("/init", methods=["GET"])
 def initialize():
-    response = Response(json.dumps(
-        {
-            "files_version": 0,
-            "files": [
-                {
-                    "title": "Filename.mp4",
-                    "total": "1955M",
-                    "downloaded": "350M",
-                    "speed": "105M",
-                    "finished": False
-                },
-                {
-                    "title": "Filename2.mp4",
-                    "total": "2555M",
-                    "downloaded": "2336M",
-                    "speed": "105M",
-                    "finished": False
-                }
-            ]
-        }
-    ))
+    response = Response(get_files_structure())
     response.headers["Content-Type"] = "application/json"
+
     return response
 
 
 @app.route('/download', methods=["POST"])
 def download():
+    global data_version, files_structure, uuids_pids
     communicator.download(request.json)
 
-    return request.json
+    files_structure, uuids_pids = communicator.get_files_structure()
+    data_version += 1
+    if not files_structure:
+        data_version = -1
+
+    response = Response(get_files_structure())
+    response.headers["Content-Type"] = "application/json"
+
+    return response
+
+
+def get_files_structure() -> str:
+    dict_files_structure = {
+        "files_version": data_version,
+        "file": files_structure
+    }
+
+    return json.dumps(dict_files_structure)
 
 
 if __name__ == '__main__':

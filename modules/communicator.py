@@ -12,7 +12,7 @@ UUID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 def read_data(download_uuid: str) -> dict:
     download_uuid.replace(".", "")  # upper folder attack
-    path_to_file = PATH_STRUCTURE % download_uuid
+    path_to_file = f"{NOHUP_OUTPUT_PATH}/{download_uuid}.out"
 
     with open(path_to_file, "r", encoding="UTF-8") as data_file:
         info_line = data_file.readlines()[-1]
@@ -38,8 +38,46 @@ def struct_data_for_websocket(data: dict) -> dict:
     return {
         "speed": data["speed_current"],
         "downloaded": data["data_received"],
-        "finished": True if data["data_percent"] == "100" else False
+        "finished": True if data["data_percent"] == "100" else False,
+        "available_for_unzip": False  # TODO: available to unzip
     }
+
+
+def struct_data_for_reinit(status: int, name: str, total: str, url: str, data: dict) -> dict:
+    finished = True if 2 < status < 5 else False
+    available_to_unzip = True if status == 4 else False
+
+    return {
+        "title": name,
+        "total": total,
+        "downloaded": data["data_received"],
+        "speed": data["speed_current"],
+        "finished": finished,
+        "available_for_unzip": available_to_unzip,
+        "url": url
+    }
+
+
+def get_files_structure():
+    connection = db.get_db()
+    all_files = connection.execute("SELECT name, total, status, uuid, url, pid FROM downloads").fetchall()
+
+    array_files = []
+    array_uuids_pids = []
+    for file in all_files:
+        name = file[0]
+        total = file[1]
+        status = file[2]
+        uuid = file[3]
+        url = file[4]
+        pid = file[5]
+        uuid_pid = [uuid, pid]
+        array_uuids_pids.append(uuid_pid)
+
+        dict_file = struct_data_for_reinit(status, name, total, url, read_data(uuid))
+        array_files.append(dict_file)
+
+    return array_files, array_uuids_pids
 
 
 def download(data):
@@ -95,4 +133,8 @@ def add_entry_to_database(name, url):
         return
 
     pid = execute_curl(url, name, uuid)
-    print(pid)
+    data = read_data(uuid)
+
+    connection.execute("INSERT INTO downloads(uuid, name, total, status, url, pid) VALUES (?, ?, ?, ?, ?, ?)",
+                       (uuid, name, data["data_total"], 0, url, pid))
+    connection.commit()

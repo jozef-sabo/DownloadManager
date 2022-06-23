@@ -1,6 +1,6 @@
 let input_url = document.getElementById("input_url");
 let list_downloads = document.getElementById("list_downloads");
-let data_version = 0;
+let data_version = -1;
 const size_multipliers = {
     "B": 1,
     "kB": 1024,
@@ -20,7 +20,7 @@ function download() {
             "ftp_client": -1
         }
     )
-    send_request("download", "POST", data, null, null)
+    send_request("download", "POST", data, render_items, null)
 
 }
 
