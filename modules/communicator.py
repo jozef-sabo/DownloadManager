@@ -9,6 +9,7 @@ PATH_STRUCTURE = "./modules/%s.out"
 OUTPUT_PATH = "/home/user/ftp"
 NOHUP_OUTPUT_PATH = OUTPUT_PATH + "/nohup"
 UUID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+STARTUP_TIME_FILE = ".startup_time"
 
 
 def read_data(download_uuid: str) -> dict:
@@ -45,7 +46,7 @@ def struct_data_for_websocket(data: dict) -> dict:
     }
 
 
-def struct_data_for_reinit(status: int, name: str, total: str, url: str, data: dict) -> dict:
+def struct_data_for_reinit(status: int, name: str, total: str, url: str, running: bool, data: dict) -> dict:
     finished = True if 2 < status < 5 else False
     available_to_unzip = True if status == 4 else False
 
@@ -56,13 +57,23 @@ def struct_data_for_reinit(status: int, name: str, total: str, url: str, data: d
         "speed": data["speed_current"],
         "finished": finished,
         "available_for_unzip": available_to_unzip,
+        "running": running,
         "url": url
     }
 
 
+def is_process_running(pid: int):
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
+
+
 def get_files_structure():
     connection = db.get_db()
-    all_files = connection.execute("SELECT name, total, status, uuid, url, pid FROM downloads").fetchall()
+    all_files = connection.execute("SELECT name, total, status, uuid, url, pid, running FROM downloads").fetchall()
 
     array_files = []
     array_uuids_pids = []
@@ -73,13 +84,44 @@ def get_files_structure():
         uuid = file[3]
         url = file[4]
         pid = file[5]
+        running = True if file[6] == 1 else False
         uuid_pid = [uuid, pid]
         array_uuids_pids.append(uuid_pid)
 
-        dict_file = struct_data_for_reinit(status, name, total, url, read_data(uuid))
+        if running:
+            running = is_process_running(pid)
+
+        actual_data = read_data(uuid)
+        if actual_data["data_percent"] == "100" and status < 3:
+            status = 3
+            connection.execute("UPDATE downloads SET status = ?, running = ? WHERE uuid = ?", (status, int(running),
+                                                                                               uuid))
+            connection.commit()
+
+        dict_file = struct_data_for_reinit(status, name, total, url, running, actual_data)
         array_files.append(dict_file)
 
     return array_files, array_uuids_pids
+
+
+def process_uptime_date():
+    process = subprocess.check_output(["who", "-b"])
+    startup_time_str = process.decode("UTF-8").strip()
+    last_startup_time_str = ""
+
+    if os.path.isfile(STARTUP_TIME_FILE):
+        with open(STARTUP_TIME_FILE, "r") as startup_time_file:
+            last_startup_time = startup_time_file.readlines()
+            if len(last_startup_time) > 0:
+                last_startup_time_str = last_startup_time[0]
+
+    if last_startup_time_str != startup_time_str:
+        connection = db.get_db()
+        connection.execute("UPDATE downloads SET running = ? WHERE 1", (0,))
+        connection.commit()
+
+        with open(STARTUP_TIME_FILE, "w") as startup_time_file:
+            startup_time_file.write(startup_time_str)
 
 
 def download(data):

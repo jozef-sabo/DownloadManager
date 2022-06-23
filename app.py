@@ -143,6 +143,7 @@ def get_websocket_data_dict(files_data: list) -> dict:
 if __name__ == '__main__':
     with app.app_context():
         db.init_app(app)
+        communicator.process_uptime_date()
         recreate_file_structure()
 
     socketio.run(app, debug=True)

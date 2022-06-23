@@ -108,14 +108,17 @@ function convert_size_to_array(size) {
 function add_list_item(file_data) {
     let filename = file_data["title"]
     let finished = file_data["finished"]
+    let running = file_data["running"]
     let total_arr = convert_size_to_array(file_data["total"])
     let speed_arr = convert_size_to_array(file_data["speed"])
     let downloaded_arr = convert_size_to_array(file_data["downloaded"])
 
-    array_items.push({"title": filename, "total": total_arr, "finished": finished})
+    let failed = (finished || running) // not finished and not running
+
+    array_items.push({"title": filename, "total": total_arr, "finished": finished, "failed": failed})
 
     let percent = 100
-    let finished_progress = "bg-success"
+    let progress_bg = "bg-success"
     let text_percent_size = "100%"
     let text_stop_button = "X"
 
@@ -123,9 +126,16 @@ function add_list_item(file_data) {
         percent = Math.floor(100 * downloaded_arr[2] / total_arr[2])
         percent = (percent > 99) ? 99 : percent
         percent = (percent < 0) ? 0 : percent
-        finished_progress = ""
+        progress_bg = ""
         text_percent_size = `${percent}% - ${speed_arr[0]}${speed_arr[1]}/s`
         text_stop_button = "■"
+    }
+
+    if (failed) {
+        progress_bg = "bg-danger"
+        percent = 100
+        text_percent_size = "stiahnutie neúspešné"
+        text_stop_button = "X"
     }
 
     let list_item = `<li class="list-group-item">
@@ -139,7 +149,7 @@ function add_list_item(file_data) {
                                 </div>
                                 <div class="col-md-4 d-flex flex-column justify-content-center pt-md-0 pt-2">
                                     <div class="progress">
-                                        <div class="progress-bar  ${finished_progress}" role="progressbar" style="width: ${percent}%" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">${text_percent_size}</div>
+                                        <div class="progress-bar  ${progress_bg}" role="progressbar" style="width: ${percent}%" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">${text_percent_size}</div>
                                     </div>
                                 </div>
                             </div>

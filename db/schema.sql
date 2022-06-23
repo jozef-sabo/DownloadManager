@@ -20,5 +20,6 @@ CREATE TABLE downloads (
   status INT NOT NULL,
   url TEXT NOT NULL,
   pid INT NOT NULL,
+  running INT DEFAULT 1,
   FOREIGN KEY (status) REFERENCES statuses (id)
 );
