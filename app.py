@@ -18,34 +18,30 @@ files_structure = []
 uuids_pids = []
 
 
-def bg_emit():
-    socketio.emit(
-        'downloading',
-        {
-            "files_version": 0,
-            "files": [
-                {
-                    "speed": "350k",
-                    "downloaded": "13605M",
-                    "finished": True
-                },
-                {
-                    "speed": "15M",
-                    "downloaded": "1763M",
-                    "finished": False
-                }
-            ]
-        }
-    )
+def send_websocket():
+    websocket_files = []
+    for uuid_pid_num in range(len(uuids_pids)):
+        uuid = uuids_pids[uuid_pid_num][0]
+        file_data = communicator.read_data(uuid)
+
+        websocket_data = communicator.struct_data_for_websocket(file_data)
+        files_structure[uuid_pid_num]["downloaded"] = websocket_data["downloaded"]
+        files_structure[uuid_pid_num]["speed"] = websocket_data["speed"]
+
+        websocket_files.append(websocket_data)
+
+    websocket_data_to_send = get_websocket_data(websocket_files)
+
+    socketio.emit('downloading', websocket_data_to_send)
 
 
-def listen():
+def create_sender():
     while True:
-        bg_emit()
+        send_websocket()
         eventlet.sleep(10)
 
 
-eventlet.spawn(listen)
+eventlet.spawn(create_sender)
 
 
 @socketio.on('message')
@@ -89,6 +85,15 @@ def get_files_structure() -> str:
     }
 
     return json.dumps(dict_files_structure)
+
+
+def get_websocket_data(files_data: list) -> str:
+    dict_websocket_data = {
+        "files_version": data_version,
+        "files": files_data
+    }
+
+    return json.dumps(dict_websocket_data)
 
 
 if __name__ == '__main__':
