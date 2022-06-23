@@ -11,7 +11,7 @@ eventlet.monkey_patch()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "SecretKeyForFlaskApplicationMadeByJefinko"
 app.config['DATABASE'] = "db/db"
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 
 def bg_emit():
