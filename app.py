@@ -85,7 +85,7 @@ def download():
 def get_files_structure() -> str:
     dict_files_structure = {
         "files_version": data_version,
-        "file": files_structure
+        "files": files_structure
     }
 
     return json.dumps(dict_files_structure)
