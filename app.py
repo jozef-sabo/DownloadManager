@@ -42,8 +42,8 @@ def send_websocket():
             if files_structure[uuid_pid_num]["available_for_unzip"] != websocket_data["available_for_unzip"]:
                 files_structure[uuid_pid_num]["available_for_unzip"] = websocket_data["available_for_unzip"]
                 status += 1
-
-            communicator.edit_status_in_database(status, uuid)
+            with app.app_context():
+                communicator.edit_status_in_database(status, uuid)
 
         del websocket_data["total"]
         websocket_files.append(websocket_data)
