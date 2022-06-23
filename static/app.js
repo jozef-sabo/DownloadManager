@@ -137,9 +137,9 @@ function add_list_item(file_data) {
                                     </div>
                                     <button type="button" class="btn btn-outline-danger mx-1">${text_stop_button}</button>
                                 </div>
-                                <div class="col-md-4 ${finished_progress} d-flex flex-column justify-content-center pt-md-0 pt-2">
+                                <div class="col-md-4 d-flex flex-column justify-content-center pt-md-0 pt-2">
                                     <div class="progress">
-                                        <div class="progress-bar" role="progressbar" style="width: ${percent}%" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">${text_percent_size}</div>
+                                        <div class="progress-bar  ${finished_progress}" role="progressbar" style="width: ${percent}%" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">${text_percent_size}</div>
                                     </div>
                                 </div>
                             </div>
