@@ -41,6 +41,14 @@ def create_sender():
         eventlet.sleep(10)
 
 
+def recreate_file_structure():
+    global files_structure, uuids_pids, data_version
+    files_structure, uuids_pids = communicator.get_files_structure()
+    data_version += 1
+    if not files_structure:
+        data_version = -1
+
+
 eventlet.spawn(create_sender)
 
 
@@ -67,10 +75,7 @@ def download():
     global data_version, files_structure, uuids_pids
     communicator.download(request.json)
 
-    files_structure, uuids_pids = communicator.get_files_structure()
-    data_version += 1
-    if not files_structure:
-        data_version = -1
+    recreate_file_structure()
 
     response = Response(get_files_structure())
     response.headers["Content-Type"] = "application/json"
@@ -99,4 +104,7 @@ def get_websocket_data_dict(files_data: list) -> dict:
 if __name__ == '__main__':
     with app.app_context():
         db.init_app(app)
+
+    recreate_file_structure()
+
     socketio.run(app, debug=True)

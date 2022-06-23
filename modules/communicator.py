@@ -36,6 +36,7 @@ def read_data(download_uuid: str) -> dict:
 
 
 def struct_data_for_websocket(data: dict) -> dict:
+    print("Data percent: ", data["data_percent"])
     return {
         "speed": data["speed_current"],
         "downloaded": data["data_received"],
