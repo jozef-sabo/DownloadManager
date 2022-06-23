@@ -30,7 +30,7 @@ def send_websocket():
 
         websocket_files.append(websocket_data)
 
-    websocket_data_to_send = get_websocket_data(websocket_files)
+    websocket_data_to_send = get_websocket_data_dict(websocket_files)
 
     socketio.emit('downloading', websocket_data_to_send)
 
@@ -87,13 +87,13 @@ def get_files_structure() -> str:
     return json.dumps(dict_files_structure)
 
 
-def get_websocket_data(files_data: list) -> str:
+def get_websocket_data_dict(files_data: list) -> dict:
     dict_websocket_data = {
         "files_version": data_version,
         "files": files_data
     }
 
-    return json.dumps(dict_websocket_data)
+    return dict_websocket_data
 
 
 if __name__ == '__main__':
