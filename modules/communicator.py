@@ -6,7 +6,7 @@ import subprocess
 
 PATH_STRUCTURE = "./modules/%s.out"
 OUTPUT_PATH = "/home/user/ftp"
-NOHUP_OUTPUT_PATH = "/home/user/ftp/nohup"
+NOHUP_OUTPUT_PATH = OUTPUT_PATH + "/nohup"
 UUID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 
@@ -59,14 +59,22 @@ def create_uuid(size: int = 10) -> str:
     return "".join(random.sample(UUID_CHARS, size))
 
 
-def execute_curl(url, name, uuid):
+def execute_curl(url, name, uuid) -> int:
+    if not os.path.isdir(NOHUP_OUTPUT_PATH):
+        try:
+            os.makedirs(NOHUP_OUTPUT_PATH)
+        except Exception as e:
+            return -1  # TODO: send beautiful message
+
     path_to_output_file = os.path.join(NOHUP_OUTPUT_PATH, uuid)
+    path_to_file = os.path.join(OUTPUT_PATH, name)
+
     process = subprocess.Popen(
-        ["curl", "-Lo", name, url],
+        f"nohup curl {path_to_file} {url} &",
         stdin=subprocess.DEVNULL,
         stdout=open(f"{path_to_output_file}.out", 'w'),
         stderr=subprocess.STDOUT,
-        # shell=True
+        shell=True
     )
 
     return process.pid
