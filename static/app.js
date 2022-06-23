@@ -49,7 +49,7 @@ function setup_socketio() {
     });
 
     socket.on("downloading", function(received_data) {
-        normalize_totals()
+        normalize_totals();
         received_data["files"].forEach(function (value, index) {
             edit_list_item(index, value)
         })
@@ -60,7 +60,7 @@ function normalize_totals(data = null) {
     if (data == null) {
         let request_data = {"ids": []}
         array_items.forEach(function (value, index) {
-            if (value["total"][0] === "0") {
+            if (value["total"][0] === 0) {
                 request_data["ids"].push(index)
             }
         })
@@ -129,6 +129,12 @@ function add_list_item(file_data) {
         progress_bg = ""
         text_percent_size = `${percent}% - ${speed_arr[0]}${speed_arr[1]}/s`
         text_stop_button = "■"
+
+        if (total_arr[0] === 0) {
+            text_percent_size = `${speed_arr[0]}${speed_arr[1]}/s`
+            progress_bg = "progress-bar-striped progress-bar-animated"
+            percent = 100
+        }
         if (failed) {
             progress_bg = "bg-danger"
             percent = 100
@@ -188,12 +194,19 @@ function edit_list_item(index, data) {
 
         if (!finished) {
             progress_bar.classList.remove("bg-success")
-            percent = Math.floor(100 * downloaded_arr[2] / array_items[index]["total"][2])
-            percent = (percent > 99) ? 99 : percent
-            percent = (percent < 0) ? 0 : percent
+            progress_bar.classList.add("progress-bar-animated")
+            progress_bar.classList.add("progress-bar-striped")
+            if (array_items[index]["total"][2] !== 0) {
+                percent = Math.floor(100 * downloaded_arr[2] / array_items[index]["total"][2])
+                percent = (percent > 99) ? 99 : percent
+                percent = (percent < 0) ? 0 : percent
 
-            progress_bar_text_arr[0] = `${percent}% `
-            text_percent_size = progress_bar_text_arr.join("-")
+                progress_bar_text_arr[0] = `${percent}% `
+                text_percent_size = progress_bar_text_arr.join("-")
+
+                progress_bar.classList.remove("progress-bar-animated")
+                progress_bar.classList.remove("progress-bar-striped")
+            }
         }
 
         progress_bar.innerHTML = text_percent_size
