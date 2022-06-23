@@ -70,7 +70,7 @@ def execute_curl(url, name, uuid) -> int:
     path_to_file = os.path.join(OUTPUT_PATH, name)
 
     process = subprocess.Popen(
-        f"nohup curl {path_to_file} {url} &",
+        f"nohup curl -Lo {path_to_file} {url} &",
         stdin=subprocess.DEVNULL,
         stdout=open(f"{path_to_output_file}.out", 'w'),
         stderr=subprocess.STDOUT,
