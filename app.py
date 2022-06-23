@@ -28,11 +28,22 @@ def send_websocket():
         files_structure[uuid_pid_num]["downloaded"] = websocket_data["downloaded"]
         files_structure[uuid_pid_num]["speed"] = websocket_data["speed"]
 
-        if files_structure[uuid_pid_num]["total"] != websocket_data["total"]\
+        if files_structure[uuid_pid_num]["total"] != websocket_data["total"] \
                 and files_structure[uuid_pid_num]["total"] == "0":
             files_structure[uuid_pid_num]["total"] = websocket_data["total"]
             with app.app_context():
                 communicator.edit_total_in_database(websocket_data["total"], uuid)
+
+        if files_structure[uuid_pid_num]["finished"] != websocket_data["finished"] and \
+                not files_structure[uuid_pid_num]["finished"]:
+            files_structure[uuid_pid_num]["finished"] = websocket_data["finished"]
+            status = 3
+
+            if files_structure[uuid_pid_num]["available_for_unzip"] != websocket_data["available_for_unzip"]:
+                files_structure[uuid_pid_num]["available_for_unzip"] = websocket_data["available_for_unzip"]
+                status += 1
+
+            communicator.edit_status_in_database(status, uuid)
 
         del websocket_data["total"]
         websocket_files.append(websocket_data)

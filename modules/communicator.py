@@ -147,3 +147,9 @@ def edit_total_in_database(new_total: str, uuid: str):
     connection = db.get_db()
     connection.execute("UPDATE downloads SET total = ? WHERE uuid = ?", (new_total, uuid))
     connection.commit()
+
+
+def edit_status_in_database(new_status: int, uuid: str):
+    connection = db.get_db()
+    connection.execute("UPDATE downloads SET status = ? WHERE uuid = ?", (new_status, uuid))
+    connection.commit()
