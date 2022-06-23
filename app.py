@@ -31,7 +31,8 @@ def send_websocket():
         if files_structure[uuid_pid_num]["total"] != websocket_data["total"]\
                 and files_structure[uuid_pid_num]["total"] == "0":
             files_structure[uuid_pid_num]["total"] = websocket_data["total"]
-            pass
+            with app.app_context():
+                communicator.edit_total_in_database(websocket_data["total"], uuid)
 
         del websocket_data["total"]
         websocket_files.append(websocket_data)

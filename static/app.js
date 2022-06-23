@@ -88,6 +88,7 @@ function render_items(data, from_user = false) {
 
 function clear_list() {
     list_downloads.innerHTML = ""
+    array_items = []
 }
 
 function convert_size_to_array(size) {
