@@ -22,6 +22,7 @@ def send_websocket():
     websocket_files = []
     for uuid_pid_num in range(len(uuids_pids)):
         uuid = uuids_pids[uuid_pid_num][0]
+        pid = uuids_pids[uuid_pid_num][1]
         file_data = communicator.read_data(uuid)
 
         websocket_data = communicator.struct_data_for_websocket(file_data)
@@ -44,6 +45,8 @@ def send_websocket():
                 status += 1
             with app.app_context():
                 communicator.edit_status_in_database(status, uuid)
+
+        websocket_data["running"] = communicator.is_process_running(pid)
 
         del websocket_data["total"]
         websocket_files.append(websocket_data)
