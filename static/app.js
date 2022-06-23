@@ -113,7 +113,7 @@ function add_list_item(file_data) {
     let speed_arr = convert_size_to_array(file_data["speed"])
     let downloaded_arr = convert_size_to_array(file_data["downloaded"])
 
-    let failed = (finished || running) // not finished and not running
+    let failed = (!finished && !running) // not finished and not running
 
     array_items.push({"title": filename, "total": total_arr, "finished": finished, "failed": failed})
 
@@ -129,13 +129,12 @@ function add_list_item(file_data) {
         progress_bg = ""
         text_percent_size = `${percent}% - ${speed_arr[0]}${speed_arr[1]}/s`
         text_stop_button = "■"
-    }
-
-    if (failed) {
-        progress_bg = "bg-danger"
-        percent = 100
-        text_percent_size = "stiahnutie neúspešné"
-        text_stop_button = "X"
+        if (failed) {
+            progress_bg = "bg-danger"
+            percent = 100
+            text_percent_size = "stiahnutie neúspešné"
+            text_stop_button = "X"
+        }
     }
 
     let list_item = `<li class="list-group-item">
