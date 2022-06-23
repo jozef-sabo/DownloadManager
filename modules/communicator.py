@@ -96,12 +96,3 @@ def add_entry_to_database(name, url):
 
     pid = execute_curl(url, name, uuid)
     print(pid)
-
-
-"""def test_db(data):
-    connection = db.get_db()
-    connection.execute("INSERT INTO downloads(hash, name, total, status) VALUES ('habbah', 'Name of', '125M', 2)")
-    connection.commit()"""
-
-
-print(read_data("nohup"))
