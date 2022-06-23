@@ -1,7 +1,7 @@
 import json
 
 from flask import Flask, render_template, request, Response
-from flask_socketio import SocketIO, send, emit
+from flask_socketio import SocketIO
 import eventlet
 from db import db
 from modules import communicator
@@ -28,6 +28,12 @@ def send_websocket():
         files_structure[uuid_pid_num]["downloaded"] = websocket_data["downloaded"]
         files_structure[uuid_pid_num]["speed"] = websocket_data["speed"]
 
+        if files_structure[uuid_pid_num]["total"] != websocket_data["total"]\
+                and files_structure[uuid_pid_num]["total"] == "0":
+            files_structure[uuid_pid_num]["total"] = websocket_data["total"]
+            pass
+
+        del websocket_data["total"]
         websocket_files.append(websocket_data)
 
     websocket_data_to_send = get_websocket_data_dict(websocket_files)
@@ -83,6 +89,27 @@ def download():
     return response
 
 
+@app.route("/update_totals", methods=["GET"])
+def update_totals():
+    ids = request.json["ids"]
+    response_dict = {"totals": {}}
+
+    length = len(files_structure)
+    for id_index in ids:
+        if id_index < 0 or length < id_index:
+            continue
+
+        if files_structure[id_index] != "0":
+            response_dict["totals"][str(id_index)] = files_structure[id_index]
+
+    response = Response(response_dict)
+    response.headers["Content-Type"] = "application/json"
+    if not response_dict["total"]:
+        response.status = 204
+
+    return response
+
+
 def get_files_structure() -> str:
     dict_files_structure = {
         "files_version": data_version,
@@ -104,7 +131,6 @@ def get_websocket_data_dict(files_data: list) -> dict:
 if __name__ == '__main__':
     with app.app_context():
         db.init_app(app)
-
-    recreate_file_structure()
+        recreate_file_structure()
 
     socketio.run(app, debug=True)

@@ -48,12 +48,32 @@ function setup_socketio() {
         //socket.emit('my event', {data: 'I\'m connected!'});
     });
 
-    socket.on("downloading", function(listener) {
-        listener["files"].forEach(function (value, index) {
+    socket.on("downloading", function(received_data) {
+        received_data["files"].forEach(function (value, index) {
+            normalize_totals()
             edit_list_item(index, value)
         })
-        //socket.emit('my event', {data: 'Lets goo!'});
     });
+}
+
+function normalize_totals(data = null) {
+    if (data == null) {
+        let request_data = {"ids": []}
+        array_items.forEach(function (index, value) {
+            if (value["total"] === "0") {
+                request_data["ids"].push(index)
+            }
+        })
+        if (request_data["ids"].length !== 0) {
+            send_request("update_totals", "GET", request_data, normalize_totals)
+        }
+        return
+    }
+
+    let ids_dict = data["totals"]
+    Object.entries(ids_dict).forEach(([key, value]) => {
+        edit_list_item(Number(key), {"total": value})
+})
 }
 
 function render_items(data, from_user = false) {
@@ -111,7 +131,7 @@ function add_list_item(file_data) {
                             <div class="pt-2 d-flex align-content-between justify-content-between flex-column flex-md-row">
                                 <div class="d-flex flex-row justify-content-between w-100">
                                     <div class="py-2">
-                                        <span class="text-muted">${total_arr[0]}<span class="size-marker">${total_arr[1]}</span> </span>
+                                        <span class="text-muted"><span>${total_arr[0]}</span><span class="size-marker">${total_arr[1]}</span> </span>
                                         <span>${filename}</span>
                                     </div>
                                     <button type="button" class="btn btn-outline-danger mx-1">${text_stop_button}</button>
@@ -169,6 +189,14 @@ function edit_list_item(index, data) {
         progress_bar.innerHTML = text_percent_size
         progress_bar.style.width = percent + "%"
         progress_bar.setAttribute("aria-valuenow", String(percent))
+    }
+
+    if (data["total"] !== undefined) {
+        let total_arr = convert_size_to_array(data["total"])
+        let size =  list_downloads.children[0].firstElementChild.firstElementChild.firstElementChild.firstElementChild
+        array_items[index]["total"] = total_arr
+        size.children[0].innerHTML = String(total_arr[0])
+        size.children[1].innerHTML = total_arr[1]
     }
 }
 

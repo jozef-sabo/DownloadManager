@@ -36,12 +36,12 @@ def read_data(download_uuid: str) -> dict:
 
 
 def struct_data_for_websocket(data: dict) -> dict:
-    print("Data percent: ", data["data_percent"])
     return {
         "speed": data["speed_current"],
         "downloaded": data["data_received"],
         "finished": True if data["data_percent"] == "100" else False,
-        "available_for_unzip": False  # TODO: available to unzip
+        "available_for_unzip": False,  # TODO: available to unzip,
+        "total": data["data_total"]
     }
 
 
@@ -140,4 +140,10 @@ def add_entry_to_database(name, url):
 
     connection.execute("INSERT INTO downloads(uuid, name, total, status, url, pid) VALUES (?, ?, ?, ?, ?, ?)",
                        (uuid, name, data["data_total"], 0, url, pid))
+    connection.commit()
+
+
+def edit_total_in_database(new_total: str, uuid: str):
+    connection = db.get_db()
+    connection.execute("UPDATE downloads SET total = ? WHERE uuid = ?", (new_total, uuid))
     connection.commit()
