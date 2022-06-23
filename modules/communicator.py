@@ -3,6 +3,7 @@ import urllib.parse
 import os
 import random
 import subprocess
+import time
 
 PATH_STRUCTURE = "./modules/%s.out"
 OUTPUT_PATH = "/home/user/ftp"
@@ -133,6 +134,7 @@ def add_entry_to_database(name, url):
         return
 
     pid = execute_curl(url, name, uuid)
+    time.sleep(0.1)
     data = read_data(uuid)
 
     connection.execute("INSERT INTO downloads(uuid, name, total, status, url, pid) VALUES (?, ?, ?, ?, ?, ?)",
