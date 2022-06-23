@@ -89,7 +89,7 @@ def download():
     return response
 
 
-@app.route("/update_totals", methods=["GET"])
+@app.route("/update_totals", methods=["POST"])
 def update_totals():
     ids = request.json["ids"]
     response_dict = {"totals": {}}
@@ -99,12 +99,12 @@ def update_totals():
         if id_index < 0 or length < id_index:
             continue
 
-        if files_structure[id_index] != "0":
-            response_dict["totals"][str(id_index)] = files_structure[id_index]
+        if files_structure[id_index]["total"] != "0":
+            response_dict["totals"][str(id_index)] = files_structure[id_index]["total"]
 
-    response = Response(response_dict)
+    response = Response(json.dumps(response_dict))
     response.headers["Content-Type"] = "application/json"
-    if not response_dict["total"]:
+    if not response_dict["totals"]:
         response.status = 204
 
     return response
