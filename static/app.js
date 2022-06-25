@@ -105,24 +105,30 @@ function convert_size_to_array(size) {
     return [size_number, size_unit, in_bytes]
 }
 
+function convert_status_to_array(status) {
+    return {
+        "running": Boolean(status === 1 || status ===2),
+        "finished": Boolean(status === 3 || status === 4),
+        "available_to_unzip": Boolean(status === 4),
+        "failed": Boolean(status === 5)
+    }
+}
+
 function add_list_item(file_data) {
     let filename = file_data["title"]
-    let finished = file_data["finished"]
-    let running = file_data["running"]
+    let status = convert_status_to_array(file_data["status"])
     let total_arr = convert_size_to_array(file_data["total"])
     let speed_arr = convert_size_to_array(file_data["speed"])
     let downloaded_arr = convert_size_to_array(file_data["downloaded"])
 
-    let failed = (!finished && !running) // not finished and not running
-
-    array_items.push({"title": filename, "total": total_arr, "finished": finished, "failed": failed})
+    array_items.push({"title": filename, "total": total_arr, "status": status})
 
     let percent = 100
     let progress_bg = "bg-success"
     let text_percent_size = "100%"
     let text_stop_button = "X"
 
-    if (!finished) {
+    if (!status.finished) {
         percent = Math.floor(100 * downloaded_arr[2] / total_arr[2])
         percent = (percent > 99) ? 99 : percent
         percent = (percent < 0) ? 0 : percent
@@ -135,7 +141,7 @@ function add_list_item(file_data) {
             progress_bg = "progress-bar-striped progress-bar-animated"
             percent = 100
         }
-        if (failed) {
+        if (status.failed) {
             progress_bg = "bg-danger"
             percent = 100
             text_percent_size = "stiahnutie neúspešné"
@@ -166,16 +172,19 @@ function edit_list_item(index, data) {
     let progress_bar = list_downloads.children[index].firstElementChild.children[1].firstElementChild.firstElementChild
     let stop_button = list_downloads.children[index].firstElementChild.firstElementChild.lastElementChild
     let progress_bar_text_arr = progress_bar.innerHTML.split("-")
-    let finished = array_items[index]["finished"]
+    let finished = array_items[index]["status"].finished
+    let failed = array_items[index]["status"].failed
 
     if (finished) return
+    if (failed) return
 
-    if (data["finished"] !== undefined) {
-        finished = data["finished"]
+    if (data["status"] !== undefined) {
+        let status_array = convert_status_to_array(data["status"])
+        finished = status_array.finished
         if (finished) {
             stop_button.innerHTML = "X"
-            array_items[index]["finished"] = true
         }
+        array_items[index]["status"] = status_array
     }
 
     if (data["speed"] !== undefined) {
