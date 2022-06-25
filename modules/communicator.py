@@ -5,7 +5,6 @@ import random
 import subprocess
 import time
 
-PATH_STRUCTURE = "./modules/%s.out"
 OUTPUT_PATH = "/home/user/ftp"
 NOHUP_OUTPUT_PATH = OUTPUT_PATH + "/nohup"
 UUID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
@@ -15,6 +14,9 @@ STARTUP_TIME_FILE = ".startup_time"
 def read_data(download_uuid: str) -> dict:
     download_uuid.replace(".", "")  # upper folder attack
     path_to_file = f"{NOHUP_OUTPUT_PATH}/{download_uuid}.out"
+
+    if not os.path.isfile(path_to_file):
+        return {"data_percent": False}
 
     with open(path_to_file, "r", encoding="UTF-8") as data_file:
         info_line = data_file.readlines()[-1]
@@ -36,28 +38,21 @@ def read_data(download_uuid: str) -> dict:
     }
 
 
-def struct_data_for_websocket(data: dict) -> dict:
+def struct_data_for_websocket(data: dict, status: int) -> tuple:
     return {
+        "status": status,
         "speed": data["speed_current"],
-        "downloaded": data["data_received"],
-        "finished": True if data["data_percent"] == "100" else False,
-        "available_for_unzip": False,  # TODO: available to unzip,
-        "total": data["data_total"]
-    }
+        "downloaded": data["data_received"]
+    }, data["data_total"]
 
 
-def struct_data_for_reinit(status: int, name: str, total: str, url: str, running: bool, data: dict) -> dict:
-    finished = True if 2 < status < 5 else False
-    available_to_unzip = True if status == 4 else False
-
+def struct_data_for_reinit(status: int, name: str, total: str, url: str, data: dict) -> dict:
     return {
+        "status": status,
         "title": name,
         "total": total,
         "downloaded": data["data_received"],
         "speed": data["speed_current"],
-        "finished": finished,
-        "available_for_unzip": available_to_unzip,
-        "running": running,
         "url": url
     }
 
@@ -71,12 +66,27 @@ def is_process_running(pid: int):
         return True
 
 
-def get_files_structure():
+def get_status(name: str, running: bool, percent: str):
+    status = 1
+    if percent != "0":
+        status = 2
+    if percent == "100":
+        status = 3
+        if name.endswith(".zip") or name.endswith(".rar") or name.endswith(".tar") or name.endswith(".gz"):
+            status = 4
+
+    if not running and percent != "100":
+        status = 5
+
+    return status
+
+
+def get_files_structure(count_on_with_restart=False):
     connection = db.get_db()
-    all_files = connection.execute("SELECT name, total, status, uuid, url, pid, running FROM downloads").fetchall()
+    all_files = connection.execute("SELECT name, total, status, uuid, url, pid FROM downloads").fetchall()
 
     array_files = []
-    array_uuids_pids = []
+    array_not_for_user = []
     for file in all_files:
         name = file[0]
         total = file[1]
@@ -84,27 +94,50 @@ def get_files_structure():
         uuid = file[3]
         url = file[4]
         pid = file[5]
-        running = True if file[6] == 1 else False
-        uuid_pid = [uuid, pid]
-        array_uuids_pids.append(uuid_pid)
+        orphan = False
 
+        running = (True if 0 < status < 4 else False) and not count_on_with_restart
+        # when computer was restarted, no chance process is running
         if running:
+            # it is running only according to db
             running = is_process_running(pid)
+            # now we have actual and real information
+
+        if not os.path.isfile(f"{OUTPUT_PATH}/{name}"):
+            connection.execute("DELETE FROM downloads WHERE uuid = ?", (uuid, ))
+            connection.commit()
+            continue
+
+        if not os.path.isfile(f"{NOHUP_OUTPUT_PATH}/{uuid}.out"):
+            orphan = True
+
+            if running:
+                os.kill(pid, 9)
+
+            if not 2 < status < 5:
+                connection.execute("DELETE FROM downloads WHERE uuid = ?", (uuid,))
+                connection.commit()
+                continue
 
         actual_data = read_data(uuid)
-        if actual_data["data_percent"] == "100" and status < 3:
-            status = 3
-            connection.execute("UPDATE downloads SET status = ?, running = ? WHERE uuid = ?", (status, int(running),
-                                                                                               uuid))
-            connection.commit()
+        if total == "0" and total != actual_data["data_total"]:
+            total = actual_data["data_total"]
 
-        dict_file = struct_data_for_reinit(status, name, total, url, running, actual_data)
+        status = get_status(name, running, actual_data["data_percent"])
+
+        connection.execute("UPDATE downloads SET total = ?, status = ? WHERE uuid = ?", (total, status, uuid))
+        connection.commit()
+
+        # not for user = uuid, pid, orphan
+        not_for_user = [uuid, pid, orphan]
+        array_not_for_user.append(not_for_user)
+        dict_file = struct_data_for_reinit(status, name, total, url, actual_data)
         array_files.append(dict_file)
 
-    return array_files, array_uuids_pids
+    return array_files, array_not_for_user
 
 
-def process_uptime_date():
+def was_restarted() -> bool:
     process = subprocess.check_output(["who", "-b"])
     startup_time_str = process.decode("UTF-8").strip()
     last_startup_time_str = ""
@@ -115,13 +148,13 @@ def process_uptime_date():
             if len(last_startup_time) > 0:
                 last_startup_time_str = last_startup_time[0]
 
-    if last_startup_time_str != startup_time_str:
-        connection = db.get_db()
-        connection.execute("UPDATE downloads SET running = ? WHERE 1", (0,))
-        connection.commit()
+    with open(STARTUP_TIME_FILE, "w") as startup_time_file:
+        startup_time_file.write(startup_time_str)
 
-        with open(STARTUP_TIME_FILE, "w") as startup_time_file:
-            startup_time_file.write(startup_time_str)
+    if last_startup_time_str != startup_time_str:
+        return True
+
+    return False
 
 
 def download(data):
@@ -185,13 +218,7 @@ def add_entry_to_database(name, url):
     connection.commit()
 
 
-def edit_total_in_database(new_total: str, uuid: str):
+def edit_status_total_in_database(new_status: int, new_total: str, uuid: str):
     connection = db.get_db()
-    connection.execute("UPDATE downloads SET total = ? WHERE uuid = ?", (new_total, uuid))
-    connection.commit()
-
-
-def edit_status_in_database(new_status: int, uuid: str):
-    connection = db.get_db()
-    connection.execute("UPDATE downloads SET status = ? WHERE uuid = ?", (new_status, uuid))
+    connection.execute("UPDATE downloads SET status = ?, total = ? WHERE uuid = ?", (new_status, new_total, uuid))
     connection.commit()

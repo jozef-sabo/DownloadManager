@@ -13,46 +13,53 @@ app.config['SECRET_KEY'] = "SecretKeyForFlaskApplicationMadeByJefinko"
 app.config['DATABASE'] = "db/db"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+COMPUTER_RESTARTED = False
 data_version = -1
 files_structure = []
-uuids_pids = []
+not_for_user = []
 
 
 def send_websocket():
     websocket_files = []
-    for uuid_pid_num in range(len(uuids_pids)):
-        uuid = uuids_pids[uuid_pid_num][0]
-        pid = uuids_pids[uuid_pid_num][1]
+    for not_for_user_num in range(len(not_for_user)):
+        changed = False
+        uuid = not_for_user[not_for_user_num][0]
+        pid = not_for_user[not_for_user_num][1]
+        is_orphan = not_for_user[not_for_user_num][2]
+        title = files_structure[not_for_user_num]["title"]
+        if is_orphan:
+            websocket_files.append({"status": communicator.get_status(
+                title, False, "100")})
+            continue
+
+        status = files_structure[not_for_user_num]["status"]
+        if status > 2:
+            websocket_files.append({"status": status})
+            continue
+
         file_data = communicator.read_data(uuid)
 
-        websocket_data = communicator.struct_data_for_websocket(file_data)
-        files_structure[uuid_pid_num]["downloaded"] = websocket_data["downloaded"]
-        files_structure[uuid_pid_num]["speed"] = websocket_data["speed"]
+        if status < 3:
+            status = communicator.get_status(
+                title, communicator.is_process_running(pid), file_data["percent"])
+            if status != files_structure[not_for_user_num]["status"]:
+                files_structure[not_for_user_num]["status"] = status
+                changed = True
 
-        if files_structure[uuid_pid_num]["total"] != websocket_data["total"] \
-                and files_structure[uuid_pid_num]["total"] == "0":
-            files_structure[uuid_pid_num]["total"] = websocket_data["total"]
+        websocket_data, total = communicator.struct_data_for_websocket(file_data, status)
+        files_structure[not_for_user_num]["downloaded"] = websocket_data["downloaded"]
+        files_structure[not_for_user_num]["speed"] = websocket_data["speed"]
+
+        if files_structure[not_for_user_num]["total"] != total and files_structure[not_for_user_num]["total"] == "0":
+            files_structure[not_for_user_num]["total"] = total
+            changed = True
+
+        if changed:
             with app.app_context():
-                communicator.edit_total_in_database(websocket_data["total"], uuid)
+                communicator.edit_status_total_in_database(status, uuid)
 
-        if files_structure[uuid_pid_num]["finished"] != websocket_data["finished"] and \
-                not files_structure[uuid_pid_num]["finished"]:
-            files_structure[uuid_pid_num]["finished"] = websocket_data["finished"]
-            status = 3
-
-            if files_structure[uuid_pid_num]["available_for_unzip"] != websocket_data["available_for_unzip"]:
-                files_structure[uuid_pid_num]["available_for_unzip"] = websocket_data["available_for_unzip"]
-                status += 1
-            with app.app_context():
-                communicator.edit_status_in_database(status, uuid)
-
-        websocket_data["running"] = communicator.is_process_running(pid)
-
-        del websocket_data["total"]
         websocket_files.append(websocket_data)
-
     websocket_data_to_send = get_websocket_data_dict(websocket_files)
-
     socketio.emit('downloading', websocket_data_to_send)
 
 
@@ -62,15 +69,12 @@ def create_sender():
         eventlet.sleep(10)
 
 
-def recreate_file_structure():
-    global files_structure, uuids_pids, data_version
-    files_structure, uuids_pids = communicator.get_files_structure()
+def recreate_file_structure(count_on_with_restart=False):
+    global files_structure, not_for_user, data_version
+    files_structure, not_for_user = communicator.get_files_structure(count_on_with_restart)
     data_version += 1
     if not files_structure:
         data_version = -1
-
-
-eventlet.spawn(create_sender)
 
 
 @socketio.on('message')
@@ -93,9 +97,8 @@ def initialize():
 
 @app.route('/download', methods=["POST"])
 def download():
-    global data_version, files_structure, uuids_pids
+    global data_version, files_structure, not_for_user
     communicator.download(request.json)
-
     recreate_file_structure()
 
     response = Response(get_files_structure())
@@ -146,7 +149,7 @@ def get_websocket_data_dict(files_data: list) -> dict:
 if __name__ == '__main__':
     with app.app_context():
         db.init_app(app)
-        communicator.process_uptime_date()
-        recreate_file_structure()
-
+        COMPUTER_RESTARTED = communicator.was_restarted()
+        recreate_file_structure(COMPUTER_RESTARTED)
+    eventlet.spawn(create_sender)
     socketio.run(app, debug=True)

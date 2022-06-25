@@ -10,6 +10,7 @@ INSERT INTO statuses (description) VALUES ('PENDING');
 INSERT INTO statuses (description) VALUES ('IN_PROGRESS');
 INSERT INTO statuses (description) VALUES ('FINISHED');
 INSERT INTO statuses (description) VALUES ('FINISHED_AVAILABLE_TO_UNZIP');
+INSERT INTO statuses (description) VALUES ('FAILED');
 
 CREATE TABLE downloads (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,6 +21,5 @@ CREATE TABLE downloads (
   status INT NOT NULL,
   url TEXT NOT NULL,
   pid INT NOT NULL,
-  running INT DEFAULT 1,
   FOREIGN KEY (status) REFERENCES statuses (id)
 );
