@@ -66,17 +66,19 @@ def is_process_running(pid: int):
         return True
 
 
-def get_status(name: str, running: bool, percent: str):
-    status = 1
-    if percent != "0":
-        status = 2
+def get_status(name: str, running: bool, percent: str, total: str):
+    status = 5
+    if running:
+        status = 1
+        if percent != "0":
+            status = 2
     if percent == "100":
         status = 3
         if name.endswith(".zip") or name.endswith(".rar") or name.endswith(".tar") or name.endswith(".gz"):
             status = 4
 
-    if not running and percent != "100":
-        status = 5
+    # if not running and percent != "100" and total != "0":
+    #     status = 5
 
     return status
 
@@ -192,7 +194,9 @@ def execute_curl(url, name, uuid) -> int:
         shell=True
     )
 
-    return process.pid
+    actual_pid = process.pid + 1
+    # because process.pid returns pid of nohup, nohup immediately creates a new process curl with pid one greater
+    return actual_pid
 
 
 def add_entry_to_database(name, url):

@@ -29,7 +29,7 @@ def send_websocket():
         title = files_structure[not_for_user_num]["title"]
         if is_orphan:
             websocket_files.append({"status": communicator.get_status(
-                title, False, "100")})
+                title, False, "100", files_structure[not_for_user_num]["total"])})
             continue
 
         status = files_structure[not_for_user_num]["status"]
@@ -41,7 +41,7 @@ def send_websocket():
 
         if status < 3:
             status = communicator.get_status(
-                title, communicator.is_process_running(pid), file_data["percent"])
+                title, communicator.is_process_running(pid), file_data["percent"], file_data["data_total"])
             if status != files_structure[not_for_user_num]["status"]:
                 files_structure[not_for_user_num]["status"] = status
                 changed = True
@@ -56,7 +56,7 @@ def send_websocket():
 
         if changed:
             with app.app_context():
-                communicator.edit_status_total_in_database(status, uuid)
+                communicator.edit_status_total_in_database(status, total, uuid)
 
         websocket_files.append(websocket_data)
     websocket_data_to_send = get_websocket_data_dict(websocket_files)

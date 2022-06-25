@@ -107,6 +107,7 @@ function convert_size_to_array(size) {
 
 function convert_status_to_array(status) {
     return {
+        "pending": Boolean(status === 1),
         "running": Boolean(status === 1 || status ===2),
         "finished": Boolean(status === 3 || status === 4),
         "available_to_unzip": Boolean(status === 4),
@@ -128,25 +129,28 @@ function add_list_item(file_data) {
     let text_percent_size = "100%"
     let text_stop_button = "X"
 
-    if (!status.finished) {
+    if (status.available_to_unzip) {
+        progress_bg = "bg-warning"
+    }
+
+    if (status.running) {
         percent = Math.floor(100 * downloaded_arr[2] / total_arr[2])
         percent = (percent > 99) ? 99 : percent
         percent = (percent < 0) ? 0 : percent
         progress_bg = ""
         text_percent_size = `${percent}% - ${speed_arr[0]}${speed_arr[1]}/s`
         text_stop_button = "■"
-
-        if (total_arr[0] === 0) {
+    }
+    if (status.pending) {
             text_percent_size = `${speed_arr[0]}${speed_arr[1]}/s`
             progress_bg = "progress-bar-striped progress-bar-animated"
             percent = 100
-        }
-        if (status.failed) {
+    }
+    if (status.failed) {
             progress_bg = "bg-danger"
             percent = 100
             text_percent_size = "stiahnutie neúspešné"
             text_stop_button = "X"
-        }
     }
 
     let list_item = `<li class="list-group-item">
@@ -172,56 +176,33 @@ function edit_list_item(index, data) {
     let progress_bar = list_downloads.children[index].firstElementChild.children[1].firstElementChild.firstElementChild
     let stop_button = list_downloads.children[index].firstElementChild.firstElementChild.lastElementChild
     let progress_bar_text_arr = progress_bar.innerHTML.split("-")
-    let finished = array_items[index]["status"].finished
-    let failed = array_items[index]["status"].failed
+    let status = array_items[index]["status"]
+    let percent = 100
 
-    if (finished) return
-    if (failed) return
+    if (status.finished) return
+    if (status.failed) return
 
     if (data["status"] !== undefined) {
         let status_array = convert_status_to_array(data["status"])
-        finished = status_array.finished
-        if (finished) {
-            stop_button.innerHTML = "X"
-        }
         array_items[index]["status"] = status_array
+        status = status_array
     }
 
     if (data["speed"] !== undefined) {
         let speed_arr = convert_size_to_array(data["speed"])
         progress_bar = list_downloads.children[index].firstElementChild.children[1].firstElementChild.firstElementChild
         progress_bar_text_arr[1] = ` ${speed_arr[0]}${speed_arr[1]}/s`
-        progress_bar.innerHTML = progress_bar_text_arr.join("-")
     }
 
     if (data["downloaded"] !== undefined) {
         let downloaded_arr = convert_size_to_array(data["downloaded"])
-        let percent = 100
-        let text_percent_size = "100%"
+        if (array_items[index]["total"][2] !== 0) {
+            percent = Math.floor(100 * downloaded_arr[2] / array_items[index]["total"][2])
+            percent = (percent > 99) ? 99 : percent
+            percent = (percent < 0) ? 0 : percent
 
-        progress_bar.classList.add("bg-success")
-
-        if (!finished) {
-            progress_bar.classList.remove("bg-success")
-            progress_bar.classList.add("progress-bar-animated")
-            progress_bar.classList.add("progress-bar-striped")
-            text_percent_size = progress_bar_text_arr[1]
-            if (array_items[index]["total"][2] !== 0) {
-                percent = Math.floor(100 * downloaded_arr[2] / array_items[index]["total"][2])
-                percent = (percent > 99) ? 99 : percent
-                percent = (percent < 0) ? 0 : percent
-
-                progress_bar_text_arr[0] = `${percent}% `
-                text_percent_size = progress_bar_text_arr.join("-")
-
-                progress_bar.classList.remove("progress-bar-animated")
-                progress_bar.classList.remove("progress-bar-striped")
-            }
+            progress_bar_text_arr[0] = `${percent}% `
         }
-
-        progress_bar.innerHTML = text_percent_size
-        progress_bar.style.width = percent + "%"
-        progress_bar.setAttribute("aria-valuenow", String(percent))
     }
 
     if (data["total"] !== undefined) {
@@ -231,6 +212,40 @@ function edit_list_item(index, data) {
         size.children[0].innerHTML = String(total_arr[0])
         size.children[1].innerHTML = total_arr[1]
     }
+
+    progress_bar.classList.remove("progress-bar-animated")
+    progress_bar.classList.remove("progress-bar-striped")
+    let text_percent_size = progress_bar_text_arr.join("-")
+    let text_stop_button = "X"
+
+    if (status.finished) {
+        percent = 100
+        text_percent_size = "100%"
+        progress_bar.classList.add("bg-success")
+    }
+    if (status.available_to_unzip) {
+        text_percent_size = "100% - možný unzip"
+        progress_bar.classList.add("bg-warning")
+    }
+    if (status.running) {
+        text_stop_button = "■"
+    }
+    if (status.pending) {
+        percent = 100
+        text_percent_size = text_percent_size[1]
+        progress_bar.classList.add("progress-bar-animated")
+        progress_bar.classList.add("progress-bar-striped")
+    }
+    if (status.failed) {
+        percent = 100
+        text_percent_size = "stiahnutie neúspešné"
+        progress_bar.classList.add("bg-danger")
+    }
+
+    progress_bar.style.width = percent + "%"
+    progress_bar.setAttribute("aria-valuenow", String(percent))
+    progress_bar.innerHTML = text_percent_size
+    stop_button.innerHTML = text_stop_button
 }
 
 function initialize() {
