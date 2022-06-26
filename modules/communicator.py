@@ -27,7 +27,7 @@ def read_data(download_uuid: str) -> dict:
     info_line_list = info_line.split()
 
     if len(info_line_list) < 12:
-        return {"time_left": False}
+        return {"time_left": False, "data_received": "0", "speed_current": "0"}
 
     return {
         "data_percent": info_line_list[0],
@@ -127,7 +127,7 @@ def get_files_structure(count_on_with_restart=False):
         actual_data = read_data(uuid)
         if not actual_data["time_left"]:
             array_not_for_user.append([uuid, pid, False])
-            array_files.append({"status": 5, "title": f"{name}/(bad request)/"})
+            array_files.append(struct_data_for_reinit(5, f"{name}/(bad request)/", "0", url, actual_data))
             continue
 
         if total == "0" and total != actual_data["data_total"]:
