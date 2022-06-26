@@ -105,7 +105,7 @@ def get_files_structure(count_on_with_restart=False):
             running = is_process_running(pid)
             # now we have actual and real information
 
-        if not os.path.isfile(f"{OUTPUT_PATH}/{name}"):
+        if not os.path.isfile(f"{OUTPUT_PATH}/{name}") and (total != "0" or status != 1):
             connection.execute("DELETE FROM downloads WHERE uuid = ?", (uuid, ))
             connection.commit()
             continue
@@ -218,7 +218,7 @@ def add_entry_to_database(name, url):
     data = read_data(uuid)
 
     connection.execute("INSERT INTO downloads(uuid, name, total, status, url, pid) VALUES (?, ?, ?, ?, ?, ?)",
-                       (uuid, name, data["data_total"], 0, url, pid))
+                       (uuid, name, data["data_total"], 1, url, pid))
     connection.commit()
 
 
