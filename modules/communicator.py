@@ -3,7 +3,6 @@ import urllib.parse
 import os
 import random
 import subprocess
-import time
 
 OUTPUT_PATH = "/home/user/ftp"
 NOHUP_OUTPUT_PATH = OUTPUT_PATH + "/nohup"
@@ -222,11 +221,9 @@ def add_entry_to_database(name, url):
         return
 
     pid = execute_curl(url, name, uuid)
-    time.sleep(0.1)
-    data = read_data(uuid)
 
     connection.execute("INSERT INTO downloads(uuid, name, total, status, url, pid) VALUES (?, ?, ?, ?, ?, ?)",
-                       (uuid, name, data["data_total"], 1, url, pid))
+                       (uuid, name, "0", 1, url, pid))
     connection.commit()
 
 
