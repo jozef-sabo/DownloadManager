@@ -26,6 +26,9 @@ def read_data(download_uuid: str) -> dict:
     #                                 Dload  Upload   Total   Spent    Left  Speed
     info_line_list = info_line.split()
 
+    if len(info_line_list) < 12:
+        return {"data_percent": False}
+
     return {
         "data_percent": info_line_list[0],
         "data_total": info_line_list[1],
