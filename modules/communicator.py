@@ -125,7 +125,7 @@ def get_files_structure(count_on_with_restart=False):
         if total == "0" and total != actual_data["data_total"]:
             total = actual_data["data_total"]
 
-        status = get_status(name, running, actual_data["data_percent"])
+        status = get_status(name, running, actual_data["data_percent"], total)
 
         connection.execute("UPDATE downloads SET total = ?, status = ? WHERE uuid = ?", (total, status, uuid))
         connection.commit()
