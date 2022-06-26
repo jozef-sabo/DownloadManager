@@ -27,7 +27,7 @@ def read_data(download_uuid: str) -> dict:
     info_line_list = info_line.split()
 
     if len(info_line_list) < 12:
-        return {"data_percent": False}
+        return {"data_percent": "0", "data_total": "0"}
 
     return {
         "data_percent": info_line_list[0],
