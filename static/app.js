@@ -122,8 +122,6 @@ function add_list_item(file_data) {
     let speed_arr = convert_size_to_array(file_data["speed"])
     let downloaded_arr = convert_size_to_array(file_data["downloaded"])
 
-    array_items.push({"title": filename, "total": total_arr, "status": status})
-
     let percent = 100
     let progress_bg = "bg-success"
     let text_percent_size = "100%"
@@ -142,16 +140,23 @@ function add_list_item(file_data) {
         text_stop_button = "■"
     }
     if (status.pending) {
-            text_percent_size = `${speed_arr[0]}${speed_arr[1]}/s`
-            progress_bg = "progress-bar-striped progress-bar-animated"
-            percent = 100
+        text_percent_size = `${speed_arr[0]}${speed_arr[1]}/s`
+        progress_bg = "progress-bar-striped progress-bar-animated"
+        percent = 100
     }
     if (status.failed) {
-            progress_bg = "bg-danger"
-            percent = 100
-            text_percent_size = "stiahnutie neúspešné"
-            text_stop_button = "X"
+        progress_bg = "bg-danger"
+        percent = 100
+        text_percent_size = "stiahnutie neúspešné"
+        text_stop_button = "X"
+
+        if (filename.endsWith("/(bad request)/")) {
+            filename = filename.slice(0, filename.length - 15)
+            text_percent_size += " (chybná URL)"
+        }
     }
+
+    array_items.push({"title": filename, "total": total_arr, "status": status})
 
     let list_item = `<li class="list-group-item">
                             <div class="pt-2 d-flex align-content-between justify-content-between flex-column flex-md-row">
