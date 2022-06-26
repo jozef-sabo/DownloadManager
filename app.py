@@ -41,7 +41,7 @@ def send_websocket():
 
         if status < 3:
             status = communicator.get_status(
-                title, communicator.is_process_running(pid), file_data["percent"], file_data["data_total"])
+                title, communicator.is_process_running(pid), file_data["data_percent"], file_data["data_total"])
             if status != files_structure[not_for_user_num]["status"]:
                 files_structure[not_for_user_num]["status"] = status
                 changed = True
@@ -65,8 +65,8 @@ def send_websocket():
 
 def create_sender():
     while True:
-        send_websocket()
         eventlet.sleep(10)
+        send_websocket()
 
 
 def recreate_file_structure(count_on_with_restart=False):
