@@ -184,6 +184,14 @@ function edit_list_item(index, data) {
     let status = array_items[index]["status"]
     let percent = 100
 
+    if (data["total"] !== undefined) {
+        let total_arr = convert_size_to_array(data["total"])
+        let size =  list_downloads.children[index].firstElementChild.firstElementChild.firstElementChild.firstElementChild
+        array_items[index]["total"] = total_arr
+        size.children[0].innerHTML = String(total_arr[0])
+        size.children[1].innerHTML = total_arr[1]
+    }
+
     if (status.finished) return
     if (status.failed) return
 
@@ -208,14 +216,6 @@ function edit_list_item(index, data) {
 
             progress_bar_text_arr[0] = `${percent}% `
         }
-    }
-
-    if (data["total"] !== undefined) {
-        let total_arr = convert_size_to_array(data["total"])
-        let size =  list_downloads.children[index].firstElementChild.firstElementChild.firstElementChild.firstElementChild
-        array_items[index]["total"] = total_arr
-        size.children[0].innerHTML = String(total_arr[0])
-        size.children[1].innerHTML = total_arr[1]
     }
 
     progress_bar.classList.remove("progress-bar-animated")
