@@ -60,7 +60,7 @@ function normalize_totals(data = null) {
     if (data == null) {
         let request_data = {"ids": []}
         array_items.forEach(function (value, index) {
-            if (value["total"][0] === 0) {
+            if (value["total"][0] === 0 && !value["user_failed"]) {
                 request_data["ids"].push(index)
             }
         })
@@ -121,6 +121,7 @@ function add_list_item(file_data) {
     let total_arr = convert_size_to_array(file_data["total"])
     let speed_arr = convert_size_to_array(file_data["speed"])
     let downloaded_arr = convert_size_to_array(file_data["downloaded"])
+    let failed_due_to_user = false
 
     let percent = 100
     let progress_bg = "bg-success"
@@ -153,10 +154,11 @@ function add_list_item(file_data) {
         if (filename.endsWith("/(bad request)/")) {
             filename = filename.slice(0, filename.length - 15)
             text_percent_size += " (chybná URL)"
+            failed_due_to_user = true
         }
     }
 
-    array_items.push({"title": filename, "total": total_arr, "status": status})
+    array_items.push({"title": filename, "total": total_arr, "status": status, "user_failed": failed_due_to_user})
 
     let list_item = `<li class="list-group-item">
                             <div class="pt-2 d-flex align-content-between justify-content-between flex-column flex-md-row">
